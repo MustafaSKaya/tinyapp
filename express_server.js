@@ -37,6 +37,19 @@ app.post("/urls", (req, res) => {
   console.log(urlDatabase);
 });
 
+app.post("/urls/:shortURL/delete", (req, res) => {
+  const urlToDelete = req.params.shortURL;
+  delete urlDatabase[urlToDelete];
+  res.redirect(`/urls`);
+});
+
+app.post("/urls/:id", (req, res) => {
+  const id = req.params.id;
+  const urlToEdit = req.body.longURL;
+  urlDatabase[id] = urlToEdit;
+  res.redirect(`/urls`);
+});
+
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 })
