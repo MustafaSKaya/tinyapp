@@ -2,7 +2,8 @@ const express = require("express");
 const app = express();
 const PORT = 3000; // default port 8080
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser')
+const cookieParser = require('cookie-parser');
+const { request, response } = require("express");
 
 function generateRandomString(num) {
   let result = '';
@@ -22,6 +23,19 @@ const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+
+const usersDatabase = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+}
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -53,7 +67,8 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = { username: req.cookies['username'], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  res.render("urls_new", templateVars);
 })
 
 app.get("/urls/:shortURL", (req, res) => {
@@ -67,14 +82,25 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.post("/login", (request, response) => {
+  const templateVars = { username: request.cookies['username'], shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL] };
   response.cookie('username', request.body.username);
   response.redirect('/urls');
+  response.render('login', templateVars)
 });
 
 app.post('/logout', (req, res) => {
   res.clearCookie('username');
   res.redirect('/urls');
 });
+
+app.get('/register', (request, response) => {
+  const templateVars = { username: request.cookies['username'], shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL] };
+  response.render('urls_registration', templateVars);
+});
+
+/*app.post('/register', (request, response) => {
+
+})*/
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
