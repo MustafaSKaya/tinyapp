@@ -10,6 +10,7 @@ app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
@@ -21,12 +22,21 @@ const usersDatabase = {
     email: "user@example.com", 
     password: "purple-monkey-dinosaur"
   },
- "user2RandomID": {
+  "user2RandomID": {
     id: "user2RandomID", 
     email: "user2@example.com", 
     password: "dishwasher-funk"
   }
 }
+
+const getUserByEmail = (email, userDb) => {
+  for (let user in userDb) {
+      if (usersDatabase[user].email === email) {
+          return user;
+      } 
+  }
+  return false;
+};
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -72,11 +82,22 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
-app.post("/login", (request, response) => {
+app.get("/login", (request, response) => {
   const templateVars = { user: usersDatabase[request.cookies['user_id']], shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL] };
-  response.cookie('user_id', request.body.username);
-  response.redirect('/urls');
-  response.render('login', templateVars)
+  response.render('urls_login', templateVars);
+});
+
+app.post("/login", (request, response) => {
+  const email = request.body.email;
+  const password = request.body.password;
+  const user = getUserByEmail(email, usersDatabase);
+  console.log(user);
+  if (user && usersDatabase[user].password === password) {
+    response.cookie('user_id', usersDatabase[user].id);
+    response.redirect('/urls');
+    return;
+  };
+  response.status(401).send('wrong credentials');
 });
 
 app.post('/logout', (req, res) => {
@@ -94,12 +115,14 @@ app.post('/register', (request, response) => {
   const password = request.body.password;
   const userID = generateRandomString(8);
 
-  for (let element in usersDatabase) {
-    if (usersDatabase[element].email === email) {
-        return response.status(403).send('User is already exist in database.');
-    } else if (!email || !password) {
-        return response.status(403).send('Incomplete registration request!');
-    }
+  if (!email || !password) {
+    return response.status(403).send('Incomplete registration request!');
+  };
+
+  const user = getUserByEmail(email, usersDatabase);
+  console.log(user);
+  if (user) {
+    return response.status(403).send('User is already exist in database.');
   };
   
   const newUser = {
