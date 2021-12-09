@@ -4,7 +4,7 @@ const PORT = 3000; // default port 8080
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
 const { request, response } = require("express");
-const { generateRandomString } = require('./helper');
+const { generateRandomString, getUserByEmail } = require('./helper');
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
@@ -27,15 +27,6 @@ const usersDatabase = {
     email: "user2@example.com", 
     password: "dishwasher-funk"
   }
-}
-
-const getUserByEmail = (email, userDb) => {
-  for (let user in userDb) {
-      if (usersDatabase[user].email === email) {
-          return user;
-      } 
-  }
-  return false;
 };
 
 app.get("/", (req, res) => {
@@ -91,7 +82,6 @@ app.post("/login", (request, response) => {
   const email = request.body.email;
   const password = request.body.password;
   const user = getUserByEmail(email, usersDatabase);
-  console.log(user);
   if (user && usersDatabase[user].password === password) {
     response.cookie('user_id', usersDatabase[user].id);
     response.redirect('/urls');
@@ -120,7 +110,6 @@ app.post('/register', (request, response) => {
   };
 
   const user = getUserByEmail(email, usersDatabase);
-  console.log(user);
   if (user) {
     return response.status(403).send('User is already exist in database.');
   };
