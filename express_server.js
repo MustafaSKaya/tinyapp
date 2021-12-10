@@ -5,11 +5,11 @@ const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
 const { request, response } = require("express");
 const { generateRandomString, getUserByEmail } = require('./helper');
+const bcrypt = require('bcryptjs');
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
-
 
 const urlDatabase = {
   b6UTxQ: {
@@ -26,12 +26,12 @@ const usersDatabase = {
   "userRandomID": {
     id: "userRandomID", 
     email: "user@example.com", 
-    password: "purple-monkey-dinosaur"
+    password: bcrypt.hashSync("purple-monkey-dinosaur")
   },
   "user2RandomID": {
     id: "user2RandomID", 
     email: "user2@example.com", 
-    password: "dishwasher-funk"
+    password: bcrypt.hashSync("dishwasher-funk")
   }
 };
 
@@ -132,8 +132,14 @@ app.post("/login", (request, response) => {
   const email = request.body.email;
   const password = request.body.password;
   const user = getUserByEmail(email, usersDatabase);
-  if (user && usersDatabase[user].password === password) {
-    response.cookie('user_id', usersDatabase[user].id);
+  console.log(user)
+
+  if (!email || !password) {
+    response.status(401).send('Incomplete credentials');
+  };
+  
+  if (bcrypt.compareSync(password, user.password)) {
+    response.cookie('user_id', user.userID);
     response.redirect('/urls');
     return;
   };
@@ -151,8 +157,8 @@ app.get('/register', (request, response) => {
 });
 
 app.post('/register', (request, response) => {
-  const email = request.body.email;
-  const password = request.body.password;
+  let email = request.body.email;
+  let password = request.body.password;
   const userID = generateRandomString(8);
 
   if (!email || !password) {
@@ -164,16 +170,17 @@ app.post('/register', (request, response) => {
     return response.status(403).send('User is already exist in database.');
   };
   
-  const newUser = {
-    id: userID,
+  password = bcrypt.hashSync(password);
+  usersDatabase[userID] = {
+    userID,
     email,
     password
   };
-  usersDatabase[userID] = newUser;
+
   response.cookie('user_id', userID);
-  response.redirect('/urls');
   console.log(usersDatabase);
-})
+  response.redirect('/urls');
+});
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
