@@ -9,12 +9,26 @@ const generateRandomString = function (num) {
 };
 
 const getUserByEmail = (email, userDb) => {
+    if(!email.includes('@')) {
+        return "Not an email";
+    }
     for (let user in userDb) {
-        if (userDb[user].email === email) {
+        if (!userDb[user].email) {
+            return undefined;
+        } else if (userDb[user].email === email) {
             return userDb[user];
         } 
     }
-    return false;
   };
 
-module.exports = { generateRandomString, getUserByEmail }
+const urlsForUser = (id, urlDb) => {
+    let result = {};
+    for (let url in urlDb) {
+      if (urlDb[url].userID === id) {
+        result[url] = urlDb[url];
+      }
+    }
+    return result;
+  };
+
+module.exports = { generateRandomString, getUserByEmail, urlsForUser }
