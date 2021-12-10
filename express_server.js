@@ -118,7 +118,6 @@ app.get("/u/:shortURL", (request, response) => {
 
 app.get("/login", (request, response) => {
   const templateVars = { user: usersDatabase[request.session['user_id']] };
-  console.log(templateVars);
   if (templateVars.user) {
     response.redirect("/urls");
   } else {
